@@ -184,3 +184,37 @@ func testProducingMessages(t *testing.T, config *Config) {
 	safeClose(t, consumer)
 	safeClose(t, client)
 }
+
+func TestConsumerHighWaterMarkOffset(t *testing.T) {
+	checkKafkaAvailability(t)
+
+	p, err := NewSyncProducer([]string{kafkaAddr}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer safeClose(t, p)
+
+	_, offset, err := p.SendMessage("single_partition", nil, StringEncoder("Test"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	c, err := NewConsumer([]string{kafkaAddr}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer safeClose(t, c)
+
+	pc, err := c.ConsumePartition("single_partition", 0, OffsetOldest)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	<-pc.Messages()
+
+	if hwmo := pc.HighWaterMarkOffset(); hwmo != offset+1 {
+		t.Logf("Last produced offset %d; high water mark should be one higher but found %d.", offset, hwmo)
+	}
+
+	safeClose(t, pc)
+}

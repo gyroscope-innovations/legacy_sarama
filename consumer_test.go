@@ -65,6 +65,8 @@ func TestConsumerLatestOffset(t *testing.T) {
 
 	fetchResponse := new(FetchResponse)
 	fetchResponse.AddMessage("my_topic", 0, nil, ByteEncoder([]byte{0x00, 0x0E}), 0x010101)
+	block := fetchResponse.GetBlock("my_topic", 0)
+	block.HighWaterMarkOffset = 1234
 	leader.Returns(fetchResponse)
 
 	master, err := NewConsumer([]string{seedBroker.Addr()}, nil)
@@ -78,13 +80,25 @@ func TestConsumerLatestOffset(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	leader.Close()
-	safeClose(t, consumer)
+	msg := <-consumer.Messages()
 
 	// we deliver one message, so it should be one higher than we return in the OffsetResponse
+	if msg.Offset != 0x010101 {
+		t.Error("Latest message offset not fetched correctly:", msg.Offset)
+	}
+
+	// we deliver one message, so it should be one higher than we return in the OffsetResponse
+	// this way it is set correctly for the next FetchRequest.
 	if consumer.(*partitionConsumer).offset != 0x010102 {
 		t.Error("Latest offset not fetched correctly:", consumer.(*partitionConsumer).offset)
 	}
+
+	if hwmo := consumer.HighWaterMarkOffset(); hwmo != 1234 {
+		t.Errorf("Expected high water mark offset 1234, found %d", hwmo)
+	}
+
+	leader.Close()
+	safeClose(t, consumer)
 }
 
 func TestConsumerFunnyOffsets(t *testing.T) {
