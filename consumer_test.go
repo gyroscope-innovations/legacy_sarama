@@ -87,18 +87,18 @@ func TestConsumerLatestOffset(t *testing.T) {
 		t.Error("Latest message offset not fetched correctly:", msg.Offset)
 	}
 
-	// we deliver one message, so it should be one higher than we return in the OffsetResponse
-	// this way it is set correctly for the next FetchRequest.
-	if consumer.(*partitionConsumer).offset != 0x010102 {
-		t.Error("Latest offset not fetched correctly:", consumer.(*partitionConsumer).offset)
-	}
-
 	if hwmo := consumer.HighWaterMarkOffset(); hwmo != 1234 {
 		t.Errorf("Expected high water mark offset 1234, found %d", hwmo)
 	}
 
 	leader.Close()
 	safeClose(t, consumer)
+
+	// we deliver one message, so it should be one higher than we return in the OffsetResponse
+	// this way it is set correctly for the next FetchRequest.
+	if consumer.(*partitionConsumer).offset != 0x010102 {
+		t.Error("Latest offset not fetched correctly:", consumer.(*partitionConsumer).offset)
+	}
 }
 
 func TestConsumerFunnyOffsets(t *testing.T) {
