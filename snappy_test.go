@@ -20,9 +20,7 @@ var snappyStreamTestCases = map[string][]byte{
 func TestSnappyEncode(t *testing.T) {
 	for src, exp := range snappyTestCases {
 		dst := snappyEncode([]byte(src))
-		if err != nil {
-			t.Error("Encoding error: ", err)
-		} else if !bytes.Equal(dst, exp) {
+		if !bytes.Equal(dst, exp) {
 			t.Errorf("Expected %s to generate %v, but was %v", src, exp, dst)
 		}
 	}
