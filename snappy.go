@@ -2,14 +2,14 @@ package sarama
 
 import (
 	"bytes"
-	"encoding/binary"
 	"github.com/golang/snappy"
+	"encoding/binary"
 )
 
 var snappyMagic = []byte{130, 83, 78, 65, 80, 80, 89, 0}
 
 // SnappyEncode encodes binary data
-func snappyEncode(src []byte) []byte {
+func snappyEncode(src []byte) ([]byte, error) {
 	return snappy.Encode(nil, src)
 }
 
